@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catch the Falling Items</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #gameCanvas {
+            background-color: #87cefa;
+            border: 2px solid #333;
+        }
+
+        h1 {
+            position: absolute;
+            top: 20px;
+            color: #333;
+            font-size: 36px;
+            text-align: center;
+        }
+
+        #startBtn {
+            position: absolute;
+            bottom: 20px;
+            padding: 10px 20px;
+            font-size: 18px;
+            background-color: #28a745;
+            border: none;
+            color: white;
+            cursor: pointer;
+        }
+
+        #startBtn:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Catch the Falling Items</h1>
+    <canvas id="gameCanvas" width="400" height="600"></canvas>
+    <button id="startBtn">Start Game</button>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const startBtn = document.getElementById('startBtn');
+        const canvasWidth = canvas.width;
+        const canvasHeight = canvas.height;
+        let player;
+        let items = [];
+        let gameInterval;
+        let isGameRunning = false;
+        let score = 0;
+
+        // Player Object
+        function Player() {
+            this.width = 50;
+            this.height = 50;
+            this.x = canvasWidth / 2 - this.width / 2;
+            this.y = canvasHeight - this.height - 20;
+            this.speed = 7;
+
+            this.draw = function() {
+                ctx.fillStyle = "#FF5733";
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+            };
+
+            this.moveLeft = function() {
+                if (this.x > 0) this.x -= this.speed;
+            };
+
+            this.moveRight = function() {
+                if (this.x + this.width < canvasWidth) this.x += this.speed;
+            };
+        }
+
+        // Falling Item Object
+        function FallingItem() {
+            this.size = 30;
+            this.x = Math.random() * (canvasWidth - this.size);
+            this.y = -this.size;
+            this.speed = 3 + Math.random() * 2;
+
+            this.draw = function() {
+                ctx.fillStyle = "#FFD700";
+                ctx.beginPath();
+                ctx.arc(this.x + this.size / 2, this.y + this.size / 2, this.size / 2, 0, Math.PI * 2);
+                ctx.fill();
+            };
+
+            this.update = function() {
+                this.y += this.speed;
+            };
+        }
+
+        // Initialize the game
+        function startGame() {
+            player = new Player();
+            items = [];
+            score = 0;
+            isGameRunning = true;
+            startBtn.style.display = "none";
+            gameInterval = setInterval(updateGame, 20);
+        }
+
+        // Stop the game
+        function stopGame() {
+            clearInterval(gameInterval);
+            isGameRunning = false;
+            startBtn.style.display = "block";
+        }
+
+        // Update the game
+        function updateGame() {
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight); // Clear canvas
+            player.draw();
+
+            // Generate new falling items
+            if (Math.random() < 0.05) {
+                items.push(new FallingItem());
+            }
+
+            // Move and draw falling items
+            items.forEach((item, index) => {
+                item.update();
+                item.draw();
+
+                // Check if the player catches the item
+                if (item.y + item.size > player.y && 
+                    item.x + item.size / 2 > player.x && 
+                    item.x + item.size / 2 < player.x + player.width) {
+                    // Item caught
+                    items.splice(index, 1);
+                    score++;
+                }
+
+                // Game Over if the item falls below the screen
+                if (item.y > canvasHeight) {
+                    stopGame();
+                    alert('Game Over! Your score: ' + score);
+                }
+            });
+
+            // Draw score
+            ctx.fillStyle = "black";
+            ctx.font = "20px Arial";
+            ctx.fillText("Score: " + score, 10, 30);
+        }
+
+        // Handle keyboard input
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'ArrowLeft') {
+                player.moveLeft();
+            } else if (event.key === 'ArrowRight') {
+                player.moveRight();
+            }
+        });
+
+        // Start or restart the game
+        startBtn.addEventListener('click', function() {
+            if (!isGameRunning) {
+                startGame();
+            }
+        });
+    </script>
+
+</body>
+</html>
